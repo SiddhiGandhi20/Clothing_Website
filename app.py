@@ -68,5 +68,4 @@ jacket_set_bp = create_jacket_set_routes(mongo.db)
 app.register_blueprint(jacket_set_bp, url_prefix="/api")
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)  # Ensure the port is specified
-
+    app.run(debug=True, port=5000) # Ensure the port is specified
