@@ -13,6 +13,13 @@ def create_auth_routes(db):
         """API endpoint to register a new user."""
         data = request.get_json()
 
+        # Check if data was successfully decoded
+        if not data:
+            return jsonify({"error": "Invalid JSON format"}), 400
+
+        # Log received data
+        print(f"Received data: {data}")
+
         # Extract data from request
         name = data.get("name")
         email = data.get("email")
@@ -20,7 +27,7 @@ def create_auth_routes(db):
         confirm_password = data.get("confirm_password")
 
         # Input validation
-        if not (name and email and  password and confirm_password):
+        if not (name and email and password and confirm_password):
             return jsonify({"error": "All fields are required"}), 400
 
         if not re.match(r"[^@]+@[^@]+\.[^@]+", email):

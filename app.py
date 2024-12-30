@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_pymongo import PyMongo
 from config import Config
+from flask_cors import CORS
 from routes.admin_routes import setup_admin_routes
 from routes.user_signup_routes import create_auth_routes
 from routes.user_login_routes import setup_login_routes
@@ -18,6 +19,7 @@ from utils import JSONEncoder
 import os
 
 app = Flask(__name__)
+CORS(app)
 
 # Load MongoDB configuration from the Config class
 app.config.from_object(Config)
@@ -68,4 +70,4 @@ jacket_set_bp = create_jacket_set_routes(mongo.db)
 app.register_blueprint(jacket_set_bp, url_prefix="/api")
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000) # Ensure the port is specified
+    app.run(debug=True, host="0.0.0.0",port=5000) # Ensure the port is specified
