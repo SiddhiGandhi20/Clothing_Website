@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_pymongo import PyMongo
 from config import Config
 from flask_cors import CORS
@@ -13,13 +13,21 @@ from routes.sherwani_routes import create_sherwani_routes
 from routes.kurta_set_routes import create_kurta_set_routes
 from routes.blazer_set_routes import create_blazer_set_routes
 from routes.jacket_set_routes import create_jacket_set_routes
+from routes.bridal_detail_routes import create_bridalwear_detail_routes
+from routes.saree_detail_routes import create_saree_detail_routes
+from routes.lehenga_detail_routes import create_lehenga_detail_routes
+from routes.coordset_detail_routes import create_coordset_detail_routes
+from routes.blazerset_detail_routes import create_blazerset_detail_routes
+from routes.jacketset_detail_routes import create_jacketset_detail_routes
+from routes.kurtaset_detail_routes import create_kurtaset_detail_routes
+from routes.sherwani_detail_routes import create_sherwani_detail_routes
 
 
 from utils import JSONEncoder
 import os
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Load MongoDB configuration from the Config class
 app.config.from_object(Config)
@@ -33,6 +41,10 @@ mongo = PyMongo(app)
 # Set custom JSON encoder to handle MongoDB ObjectId
 app.json_encoder = JSONEncoder
 
+@app.route('/uploads/bridal_wear/<filename>')
+def serve_image(filename):
+    return send_from_directory(os.path.join(app.root_path, 'uploads', 'bridal_wear'), filename)
+
 # Register blueprints
 admin_bp = setup_admin_routes(mongo.db)
 app.register_blueprint(admin_bp, url_prefix="/admin")
@@ -44,7 +56,7 @@ app.register_blueprint(auth_bp, url_prefix="/auth")
 login_bp = setup_login_routes(mongo.db)
 app.register_blueprint(login_bp, url_prefix="/auth")
 
-bridal_wear_bp = create_bridal_wear_routes(mongo.db)
+bridal_wear_bp = create_bridal_wear_routes(mongo.db,upload_folder="uploads")
 app.register_blueprint(bridal_wear_bp, url_prefix="/api")
 
 # Lehenga routes
@@ -68,6 +80,30 @@ app.register_blueprint(blazer_set_bp, url_prefix="/api")
 
 jacket_set_bp = create_jacket_set_routes(mongo.db)
 app.register_blueprint(jacket_set_bp, url_prefix="/api")
+
+bridalwear_detail_bp =create_bridalwear_detail_routes(mongo.db)
+app.register_blueprint(bridalwear_detail_bp, url_prefix="/api")
+
+saree_detail_bp =create_saree_detail_routes(mongo.db)
+app.register_blueprint(saree_detail_bp, url_prefix="/api")
+
+lehenga_detail_bp =create_lehenga_detail_routes(mongo.db)
+app.register_blueprint(lehenga_detail_bp, url_prefix="/api")
+
+coordset_detail_bp =create_coordset_detail_routes(mongo.db)
+app.register_blueprint(coordset_detail_bp, url_prefix="/api")
+
+blazerset_detail_bp =create_blazerset_detail_routes(mongo.db)
+app.register_blueprint(blazerset_detail_bp, url_prefix="/api")
+
+jacketset_detail_bp =create_jacketset_detail_routes(mongo.db)
+app.register_blueprint(jacketset_detail_bp, url_prefix="/api")
+
+kurtaset_detail_bp =create_kurtaset_detail_routes(mongo.db)
+app.register_blueprint(kurtaset_detail_bp, url_prefix="/api")
+
+sherwani_detail_bp =create_sherwani_detail_routes(mongo.db)
+app.register_blueprint(sherwani_detail_bp, url_prefix="/api")
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0",port=5000) # Ensure the port is specified

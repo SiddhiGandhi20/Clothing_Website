@@ -1,8 +1,13 @@
+import jwt
+import datetime
 from flask import Blueprint, request, jsonify
 import re
 from models.user_login_model import LoginModel
 
 login_bp = Blueprint("login", __name__)
+
+# Secret key for signing the token (this should be stored securely, e.g., in environment variables)
+SECRET_KEY = "your_secret_key"
 
 def setup_login_routes(db):
     login_model = LoginModel(db)
@@ -28,6 +33,14 @@ def setup_login_routes(db):
         if not user or not login_model.check_password(user["password"], password):
             return jsonify({"error": "Invalid email or password"}), 401
 
-        return jsonify({"message": "Login successful"}), 200
+        # Generate token
+        payload = {
+            "id": str(user["_id"]),  # Assuming MongoDB ObjectId
+            "email": user["email"],
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1),  # Token expiry
+        }
+        token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+
+        return jsonify({"message": "Login successful", "token": token}), 200
 
     return login_bp
