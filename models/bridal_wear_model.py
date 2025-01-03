@@ -30,6 +30,7 @@ class BridalWearModel:
             items = self.collection.find()
             return [
                 {
+                    "_id": str(item["_id"]), 
                     "id": str(item["_id"]),
                     "name": item["name"],
                     "price": item["price"],

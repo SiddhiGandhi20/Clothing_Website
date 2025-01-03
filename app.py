@@ -45,6 +45,35 @@ app.json_encoder = JSONEncoder
 def serve_image(filename):
     return send_from_directory(os.path.join(app.root_path, 'uploads', 'bridal_wear'), filename)
 
+@app.route('/uploads/coord_sets/<filename>')
+def serve_the_image(filename):
+    return send_from_directory(os.path.join(app.root_path, 'uploads', 'coord_sets'), filename)
+
+@app.route('/uploads/blazer_sets/<filename>')
+def serve_a_image(filename):
+    return send_from_directory(os.path.join(app.root_path, 'uploads', 'blazer_sets'), filename)
+
+@app.route('/uploads/jacket_sets/<filename>')
+def serve__image(filename):
+    return send_from_directory(os.path.join(app.root_path, 'uploads', 'jacket_sets'), filename)
+
+@app.route('/uploads/kurta_sets/<filename>')
+def serve_image_(filename):
+    return send_from_directory(os.path.join(app.root_path, 'uploads', 'kurta_sets'), filename)
+
+@app.route('/uploads/lehenga/<filename>')
+def serve_image__(filename):
+    return send_from_directory(os.path.join(app.root_path, 'uploads', 'lehenga'), filename)
+
+@app.route('/uploads/sarees/<filename>')
+def servetheimage__(filename):
+    return send_from_directory(os.path.join(app.root_path, 'uploads', 'sarees'), filename)
+
+@app.route('/uploads/sherwanis/<filename>')
+def serve_theimage__(filename):
+    return send_from_directory(os.path.join(app.root_path, 'uploads', 'sherwanis'), filename)
+
+
 # Register blueprints
 admin_bp = setup_admin_routes(mongo.db)
 app.register_blueprint(admin_bp, url_prefix="/admin")

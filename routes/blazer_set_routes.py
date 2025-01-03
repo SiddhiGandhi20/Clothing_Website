@@ -1,31 +1,34 @@
-from flask import Blueprint, request, jsonify
-from bson import ObjectId
-import os
+from flask import Blueprint, request, jsonify, send_from_directory
 from werkzeug.utils import secure_filename
+import os
 from models.blazer_set_model import BlazerSetModel
 
 # Blueprint setup
-blazer_set_bp = Blueprint("blazer_set", __name__)
-UPLOAD_FOLDER = "uploads/blazer_sets/"  # Define folder for Blazer Set images
+blazer_sets_bp = Blueprint("blazer_sets", __name__)
+
+# Constants
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads/blazer_sets/")
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
-# Ensure upload folder exists
+# Ensure the upload folder exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Utility function to check allowed file types
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def create_blazer_set_routes(db):
-    blazer_set_model = BlazerSetModel(db)
+def create_blazer_set_routes(db, upload_folder=UPLOAD_FOLDER):
+    """Factory function to create blazer routes."""
+    blazer_sets_model = BlazerSetModel(db)
 
-    @blazer_set_bp.route("/blazer_sets", methods=["POST"])
-    def create_blazer_set():
-        """API endpoint to create a new Blazer Set item with an image."""
+    # Route: Create a new Blazer sets item
+    @blazer_sets_bp.route("/blazer_sets", methods=["POST"])
+    def create_blazer_sets():
         name = request.form.get("name")
         price = request.form.get("price")
         image = request.files.get("image")
 
+        # Validate input
         if not (name and price and image):
             return jsonify({"error": "Name, price, and image are required"}), 400
 
@@ -34,22 +37,39 @@ def create_blazer_set_routes(db):
 
         # Save the image securely
         filename = secure_filename(image.filename)
-        image_path = os.path.join(UPLOAD_FOLDER, filename)
+        image_path = os.path.join(upload_folder, filename)
         image.save(image_path)
 
-        # Save data to the database
-        blazer_set_model.create_item(name, price, image_path)
-        return jsonify({"message": "Blazer Set item created successfully"}), 201
+        # Store relative path in the database
+        relative_path = f"blazer_sets/{filename}"
+        blazer_sets_model.create_item(name, price, relative_path)
 
-    @blazer_set_bp.route("/blazer_sets", methods=["GET"])
+        return jsonify({"message": "Blazer sets item created successfully"}), 201
+
+    # Route: Fetch all Blazer sets items
+    @blazer_sets_bp.route("/blazer_sets", methods=["GET"])
     def get_blazer_sets():
-        """API endpoint to fetch all Blazer Set items."""
-        items = blazer_set_model.get_all_items()
+        items = blazer_sets_model.get_all_items()  # Fetch items from the database
+
+        base_url = request.host_url  # Get the base URL dynamically
+
+        for item in items:
+            # Convert `_id` to string for JSON serialization
+            if "_id" in item and item["_id"]:
+                item["_id"] = str(item["_id"])
+            else:
+                item["_id"] = None
+
+            # Append full URL for image
+            if "image_url" in item:
+                item["image_url"] = base_url + item["image_url"]
+
         return jsonify(items), 200
 
-    @blazer_set_bp.route("/blazer_sets/<item_id>", methods=["PUT"])
-    def update_blazer_set(item_id):
-        """API endpoint to update a Blazer Set item."""
+
+    # Route: Update a Blazer sets item
+    @blazer_sets_bp.route("/blazer_sets/<item_id>", methods=["PUT"])
+    def update_blazer_sets(item_id):
         name = request.form.get("name")
         price = request.form.get("price")
         image = request.files.get("image")
@@ -60,25 +80,34 @@ def create_blazer_set_routes(db):
         if price:
             update_data["price"] = price
 
+        # If a new image is uploaded, save it
         if image and allowed_file(image.filename):
             filename = secure_filename(image.filename)
-            image_path = os.path.join(UPLOAD_FOLDER, filename)
+            image_path = os.path.join(upload_folder, filename)
             image.save(image_path)
-            update_data["image"] = image_path
+            update_data["image"] = f"uploads/blazer_sets/{filename}"
 
-        updated = blazer_set_model.update_item(item_id, update_data)
+        updated = blazer_sets_model.update_item(item_id, update_data)
         if not updated:
             return jsonify({"error": "Item not found"}), 404
 
-        return jsonify({"message": "Blazer Set item updated successfully"}), 200
+        return jsonify({"message": "Blazer sets item updated successfully"}), 200
 
-    @blazer_set_bp.route("/blazer_sets/<item_id>", methods=["DELETE"])
-    def delete_blazer_set(item_id):
-        """API endpoint to delete a Blazer Set item."""
-        deleted = blazer_set_model.delete_item(item_id)
+    # Route: Delete a Blazer sets item
+    @blazer_sets_bp.route("/blazer_sets/<item_id>", methods=["DELETE"])
+    def delete_blazer_sets(item_id):
+        deleted = blazer_sets_model.delete_item(item_id)
         if not deleted:
             return jsonify({"error": "Item not found"}), 404
 
-        return jsonify({"message": "Blazer Set item deleted successfully"}), 200
+        return jsonify({"message": "Blazer sets item deleted successfully"}), 200
 
-    return blazer_set_bp
+    # Route: Serve uploaded images
+    @blazer_sets_bp.route("/uploads/blazer_sets/<filename>")
+    def serve_image(filename):
+        try:
+            return send_from_directory(upload_folder, filename)
+        except FileNotFoundError:
+            return jsonify({"error": "File not found"}), 404
+
+    return blazer_sets_bp

@@ -1,31 +1,34 @@
-from flask import Blueprint, request, jsonify
-from bson import ObjectId
-import os
+from flask import Blueprint, request, jsonify, send_from_directory
 from werkzeug.utils import secure_filename
+import os
 from models.sherwani_model import SherwaniModel
 
 # Blueprint setup
-sherwani_bp = Blueprint("sherwani", __name__)
-UPLOAD_FOLDER = "uploads/sherwanis/"  # Define folder for Sherwani images
+sherwanis_bp = Blueprint("sherwanis", __name__)
+
+# Constants
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads/sherwanis/")
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
-# Ensure upload folder exists
+# Ensure the upload folder exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Utility function to check allowed file types
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def create_sherwani_routes(db):
-    sherwani_model = SherwaniModel(db)
+def create_sherwani_routes(db, upload_folder=UPLOAD_FOLDER):
+    """Factory function to create sherwanis routes."""
+    sherwanis_model = SherwaniModel(db)
 
-    @sherwani_bp.route("/sherwanis", methods=["POST"])
-    def create_sherwani():
-        """API endpoint to create a new Sherwani item with an image."""
+    # Route: Create a new sherwanis item
+    @sherwanis_bp.route("/sherwanis", methods=["POST"])
+    def create_sherwanis():
         name = request.form.get("name")
         price = request.form.get("price")
         image = request.files.get("image")
 
+        # Validate input
         if not (name and price and image):
             return jsonify({"error": "Name, price, and image are required"}), 400
 
@@ -34,22 +37,39 @@ def create_sherwani_routes(db):
 
         # Save the image securely
         filename = secure_filename(image.filename)
-        image_path = os.path.join(UPLOAD_FOLDER, filename)
+        image_path = os.path.join(upload_folder, filename)
         image.save(image_path)
 
-        # Save data to the database
-        sherwani_model.create_item(name, price, image_path)
-        return jsonify({"message": "Sherwani item created successfully"}), 201
+        # Store relative path in the database
+        relative_path = f"sherwanis/{filename}"
+        sherwanis_model.create_item(name, price, relative_path)
 
-    @sherwani_bp.route("/sherwanis", methods=["GET"])
+        return jsonify({"message": "sherwanis item created successfully"}), 201
+
+    # Route: Fetch all sherwanis items
+    @sherwanis_bp.route("/sherwanis", methods=["GET"])
     def get_sherwanis():
-        """API endpoint to fetch all Sherwani items."""
-        items = sherwani_model.get_all_items()
+        items = sherwanis_model.get_all_items()  # Fetch items from the database
+
+        base_url = request.host_url  # Get the base URL dynamically
+
+        for item in items:
+            # Convert `_id` to string for JSON serialization
+            if "_id" in item and item["_id"]:
+                item["_id"] = str(item["_id"])
+            else:
+                item["_id"] = None
+
+            # Append full URL for image
+            if "image_url" in item:
+                item["image_url"] = base_url + item["image_url"]
+
         return jsonify(items), 200
 
-    @sherwani_bp.route("/sherwanis/<item_id>", methods=["PUT"])
-    def update_sherwani(item_id):
-        """API endpoint to update a Sherwani item."""
+
+    # Route: Update a sherwanis item
+    @sherwanis_bp.route("/sherwanis/<item_id>", methods=["PUT"])
+    def update_sherwanis(item_id):
         name = request.form.get("name")
         price = request.form.get("price")
         image = request.files.get("image")
@@ -60,25 +80,34 @@ def create_sherwani_routes(db):
         if price:
             update_data["price"] = price
 
+        # If a new image is uploaded, save it
         if image and allowed_file(image.filename):
             filename = secure_filename(image.filename)
-            image_path = os.path.join(UPLOAD_FOLDER, filename)
+            image_path = os.path.join(upload_folder, filename)
             image.save(image_path)
-            update_data["image"] = image_path
+            update_data["image"] = f"uploads/sherwanis/{filename}"
 
-        updated = sherwani_model.update_item(item_id, update_data)
+        updated = sherwanis_model.update_item(item_id, update_data)
         if not updated:
             return jsonify({"error": "Item not found"}), 404
 
-        return jsonify({"message": "Sherwani item updated successfully"}), 200
+        return jsonify({"message": "sherwanis item updated successfully"}), 200
 
-    @sherwani_bp.route("/sherwanis/<item_id>", methods=["DELETE"])
-    def delete_sherwani(item_id):
-        """API endpoint to delete a Sherwani item."""
-        deleted = sherwani_model.delete_item(item_id)
+    # Route: Delete a sherwanis item
+    @sherwanis_bp.route("/sherwanis/<item_id>", methods=["DELETE"])
+    def delete_sherwanis(item_id):
+        deleted = sherwanis_model.delete_item(item_id)
         if not deleted:
             return jsonify({"error": "Item not found"}), 404
 
-        return jsonify({"message": "Sherwani item deleted successfully"}), 200
+        return jsonify({"message": "sherwanis item deleted successfully"}), 200
 
-    return sherwani_bp
+    # Route: Serve uploaded images
+    @sherwanis_bp.route("/uploads/sherwanis/<filename>")
+    def serve_image(filename):
+        try:
+            return send_from_directory(upload_folder, filename)
+        except FileNotFoundError:
+            return jsonify({"error": "File not found"}), 404
+
+    return sherwanis_bp

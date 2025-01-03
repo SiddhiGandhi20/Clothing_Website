@@ -49,17 +49,23 @@ def create_bridal_wear_routes(db, upload_folder=UPLOAD_FOLDER):
     # Route: Fetch all bridal wear items
     @bridal_wear_bp.route("/bridal_wear", methods=["GET"])
     def get_bridal_wear():
-        items = bridal_wear_model.get_all_items()
+        items = bridal_wear_model.get_all_items()  # Fetch items from the database
 
-        # Assuming items are MongoDB documents, manually adding '_id' as string
+        base_url = request.host_url  # Get the base URL dynamically
+
         for item in items:
-            if isinstance(item, dict) and "_id" in item:
-                item["_id"] = str(item["_id"])  # Convert ObjectId to string for JSON serialization
+            # Convert `_id` to string for JSON serialization
+            if "_id" in item and item["_id"]:
+                item["_id"] = str(item["_id"])
             else:
-                # Handle cases where '_id' might be missing or item is not a dict
                 item["_id"] = None
 
+            # Append full URL for image
+            if "image_url" in item:
+                item["image_url"] = base_url + item["image_url"]
+
         return jsonify(items), 200
+
 
     # Route: Update a bridal wear item
     @bridal_wear_bp.route("/bridal_wear/<item_id>", methods=["PUT"])
