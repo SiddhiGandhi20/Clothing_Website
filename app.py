@@ -73,6 +73,10 @@ def servetheimage__(filename):
 def serve_theimage__(filename):
     return send_from_directory(os.path.join(app.root_path, 'uploads', 'sherwanis'), filename)
 
+@app.route('/uploads/blazersets_wear_details/<filename>')
+def serve_the_image__(filename):
+    return send_from_directory(os.path.join(app.root_path, 'uploads', 'blazersets_wear_details'), filename)
+
 
 # Register blueprints
 admin_bp = setup_admin_routes(mongo.db)
