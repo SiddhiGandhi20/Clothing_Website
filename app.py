@@ -13,7 +13,7 @@ from routes.sherwani_routes import create_sherwani_routes
 from routes.kurta_set_routes import create_kurta_set_routes
 from routes.blazer_set_routes import create_blazer_set_routes
 from routes.jacket_set_routes import create_jacket_set_routes
-from routes.bridal_detail_routes import create_bridalwear_detail_routes
+from routes.bridal_detail_routes import create_bridal_wear_detail_routes
 from routes.saree_detail_routes import create_saree_detail_routes
 from routes.lehenga_detail_routes import create_lehenga_detail_routes
 from routes.coordset_detail_routes import create_coordset_detail_routes
@@ -77,6 +77,35 @@ def serve_theimage__(filename):
 def serve_the_image__(filename):
     return send_from_directory(os.path.join(app.root_path, 'uploads', 'blazersets_wear_details'), filename)
 
+@app.route('/uploads/bridal_wear_details/<filename>')
+def serve_a_image__(filename):
+    return send_from_directory(os.path.join(app.root_path, 'uploads', 'bridal_wear_details'), filename)
+
+@app.route('/uploads/coordsets_wear_details/<filename>')
+def serve__image__(filename):
+    return send_from_directory(os.path.join(app.root_path, 'uploads', 'coordsets_wear_details'), filename)
+
+@app.route('/uploads/jacketsets_wear_details/<filename>')
+def serve_image___(filename):
+    return send_from_directory(os.path.join(app.root_path, 'uploads', 'jacketsets_wear_details'), filename)
+
+@app.route('/uploads/kurtasets_wear_details/<filename>')
+def serveimage___(filename):
+    return send_from_directory(os.path.join(app.root_path, 'uploads', 'kurtasets_wear_details'), filename)
+
+@app.route('/uploads/lehengas_wear_details/<filename>')
+def serveimage(filename):
+    return send_from_directory(os.path.join(app.root_path, 'uploads', 'lehengas_wear_details'), filename)
+
+@app.route('/uploads/Sarees_wear_details/<filename>')
+def serveimage_(filename):
+    return send_from_directory(os.path.join(app.root_path, 'uploads', 'Sarees_wear_details'), filename)
+
+@app.route('/uploads/sherwanis_wear_details/<filename>')
+def serveimage__(filename):
+    return send_from_directory(os.path.join(app.root_path, 'uploads', 'sherwanis_wear_details'), filename)
+
+
 
 # Register blueprints
 admin_bp = setup_admin_routes(mongo.db)
@@ -114,7 +143,7 @@ app.register_blueprint(blazer_set_bp, url_prefix="/api")
 jacket_set_bp = create_jacket_set_routes(mongo.db)
 app.register_blueprint(jacket_set_bp, url_prefix="/api")
 
-bridalwear_detail_bp =create_bridalwear_detail_routes(mongo.db)
+bridalwear_detail_bp =create_bridal_wear_detail_routes(mongo.db)
 app.register_blueprint(bridalwear_detail_bp, url_prefix="/api")
 
 saree_detail_bp =create_saree_detail_routes(mongo.db)
